@@ -14,15 +14,14 @@ def read_graph_from_file(file_path):
     return graph
 
 
-# Dijkstra để tính đường đi ngắn nhất, loại bỏ các cạnh có trọng số âm
+# Hàm Dijkstra để tính đường đi ngắn nhất
 def dijkstra(graph, start):
-    # Khởi tạo khoảng cách từ đỉnh nguồn đến các đỉnh khác
+    # Khởi tạo khoảng cách và predecessor
     distances = {vertex: float('inf') for vertex in graph}
+    predecessor = {vertex: None for vertex in graph}
     distances[start] = 0
 
-    # Duyệt qua các đỉnh
     visited = set()
-
     print(f"Ban đầu khoảng cách: {distances}")
     
     while len(visited) < len(graph):
@@ -31,34 +30,50 @@ def dijkstra(graph, start):
             (v for v in graph if v not in visited),
             key=lambda v: distances[v]
         )
-        
+
         print(f"\nĐỉnh được chọn trong vòng lặp: {current_vertex}")
         
         # Nếu khoảng cách là vô cực, kết thúc vòng lặp
         if distances[current_vertex] == float('inf'):
             break
 
-        # Đánh dấu đã thăm
         visited.add(current_vertex)
         print(f"Đã thăm đỉnh: {current_vertex}")
 
-        # Cập nhật khoảng cách đến các đỉnh lân cận
+        # Cập nhật khoảng cách và predecessor
         for neighbor, weight in graph[current_vertex].items():
             if neighbor not in visited and distances[current_vertex] + weight < distances[neighbor]:
                 print(f"Cập nhật khoảng cách từ {current_vertex} đến {neighbor} với trọng số {weight}.")
                 print(f"Trước cập nhật: distance[{neighbor}] = {distances[neighbor]}")
                 distances[neighbor] = distances[current_vertex] + weight
+                predecessor[neighbor] = current_vertex
                 print(f"Sau cập nhật: distance[{neighbor}] = {distances[neighbor]}")
         
         print(f"Tình trạng khoảng cách sau vòng lặp: {distances}")
 
     print("\nThuật toán Dijkstra hoàn thành.")
-    return distances
+    return distances, predecessor
+
+
+# Hàm in đường đi từ đỉnh nguồn đến đỉnh đích
+def print_path(predecessor, source, target):
+    path = []
+    current = target
+    while current is not None:
+        path.append(current)
+        if current == source:
+            break
+        current = predecessor[current]
+
+    if current is None:
+        return "Không có đường đi."
+    else:
+        path.reverse()
+        return " -> ".join(map(str, path))
 
 
 # Giao diện chính và đọc file từ file chọn
 def main():
-    # Tạo giao diện ẩn để chọn file
     root = tk.Tk()
     root.withdraw()  # Ẩn giao diện chính của Tkinter
     file_path = filedialog.askopenfilename(title="Chọn file TXT đầu vào", filetypes=[("Text files", "*.txt")])
@@ -70,7 +85,6 @@ def main():
     # Đọc dữ liệu từ file đã chọn
     graph = read_graph_from_file(file_path)
 
-    # Yêu cầu người dùng nhập đỉnh nguồn
     try:
         start_vertex = int(input("Nhập đỉnh nguồn: "))
         if start_vertex not in graph:
@@ -78,18 +92,22 @@ def main():
             return
 
         # Ghi nhận thời gian bắt đầu
-        start_time = time.time()  # Thời điểm trước khi chạy thuật toán
+        start_time = time.time()
 
         # Chạy thuật toán Dijkstra
-        result = dijkstra(graph, start_vertex)
+        distances, predecessor = dijkstra(graph, start_vertex)
 
         # Ghi nhận thời gian kết thúc
-        end_time = time.time()  # Thời điểm sau khi thuật toán hoàn thành
+        end_time = time.time()
 
         # Hiển thị kết quả
         print(f"\nKhoảng cách từ đỉnh {start_vertex} đến các đỉnh khác:")
-        for vertex, distance in result.items():
-            print(f"Đỉnh {vertex}: {distance if distance != float('inf') else 'Không thể tới'}")
+        for vertex, distance in distances.items():
+            if distance != float('inf'):
+                path = print_path(predecessor, start_vertex, vertex)
+                print(f"Đỉnh {vertex}: {distance}, Đường đi: {path}")
+            else:
+                print(f"Đỉnh {vertex}: Không thể tới")
 
         # Hiển thị thời gian thực thi
         print(f"Thời gian xử lý: {end_time - start_time:.6f} giây")

@@ -15,13 +15,14 @@ def read_edges_from_file(file_path):
 
 
 def bellman_ford(vertices, edges, source):
-    # Khởi tạo khoảng cách với khoảng cách vô hạn
+    # Khởi tạo khoảng cách và predecessor
     distance = {v: float('inf') for v in vertices}
+    predecessor = {v: None for v in vertices}
     distance[source] = 0
 
     print(f"Ban đầu, khoảng cách: {distance}")
 
-    # Thực hiện thuật toán Bellman-Ford với thông tin in ra
+    # Thực hiện thuật toán Bellman-Ford
     for i in range(len(vertices) - 1):
         print(f"\nVòng lặp {i + 1}:")
         for u, v, w in edges:
@@ -29,6 +30,7 @@ def bellman_ford(vertices, edges, source):
                 print(f"Cập nhật khoảng cách từ {u} đến {v} với trọng số {w}.")
                 print(f"Trước cập nhật: distance[{v}] = {distance[v]}")
                 distance[v] = distance[u] + w
+                predecessor[v] = u  # Cập nhật đỉnh trước đó
                 print(f"Sau cập nhật: distance[{v}] = {distance[v]}")
         
         print(f"Tình trạng khoảng cách sau vòng lặp {i + 1}: {distance}")
@@ -38,11 +40,26 @@ def bellman_ford(vertices, edges, source):
     for u, v, w in edges:
         if distance[u] + w < distance[v]:
             print(f"Phát hiện chu trình âm qua cạnh ({u}, {v}, {w})")
-            return False, distance
+            return False, distance, predecessor
 
     print("Không phát hiện chu trình âm.")
-    return True, distance
+    return True, distance, predecessor
 
+
+def print_path(predecessor, source, target):
+    path = []
+    current = target
+    while current is not None:
+        path.append(current)
+        if current == source:
+            break
+        current = predecessor[current]
+
+    if current is None:
+        return "Không có đường đi."
+    else:
+        path.reverse()
+        return " -> ".join(map(str, path))
 
 
 def main():
@@ -76,7 +93,7 @@ def main():
         print("Đỉnh nguồn không hợp lệ.")
         return
 
-    result, distances = bellman_ford(vertices, edges, start_vertex)
+    result, distances, predecessor = bellman_ford(vertices, edges, start_vertex)
 
     end_time = time.time()
     elapsed_time = end_time - start_time
@@ -86,10 +103,11 @@ def main():
     else:
         print("Phát hiện chu trình âm!")
 
-    print("Khoảng cách từ đỉnh nguồn đến các đỉnh:")
+    print("Khoảng cách và đường đi từ đỉnh nguồn đến các đỉnh:")
     for vertex in vertices:
         if distances[vertex] != float('inf'):
-            print(f"Đỉnh {vertex}: {int(distances[vertex])}")
+            path = print_path(predecessor, start_vertex, vertex)
+            print(f"Đỉnh {vertex}: {int(distances[vertex])}, Đường đi: {path}")
         else:
             print(f"Đỉnh {vertex}: Không thể tới")
 
